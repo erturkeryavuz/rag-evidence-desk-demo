@@ -1,6 +1,6 @@
 # RAG Platform · Evidence desk
 
-**RAG Platform answers questions from an organisation's own documents. It retrieves the passages that matter with hybrid search, writes an answer that cites them, and keeps the whole trail open to inspection: which passages were found, how they were ranked, and which one each sentence relies on.**
+**RAG Platform answers questions from an organisation’s own documents with hybrid retrieval and citations. Inspect the passages, compare their rankings, and check whether they support the answer.**
 
 ## **[→ Open the Evidence desk](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)**
 
@@ -69,7 +69,7 @@ The website presents real runs of RAG Platform's pipeline with its default setti
 - embeddings: `multilingual-e5-small`;
 - reranker: `ms-marco-MiniLM-L-6-v2`.
 
-No hosted model or paid service was used. Nothing runs in your browser, and the page connects to no backend.
+No hosted model or paid service was used. The interactive website presents completed runs; it performs no live inference and connects to no backend.
 
 The documents are synthetic: nine short engineering documents for a fictional company, labelled as demonstration material in every file. The second evaluation set summarises public fraud-awareness guidance from Turkish official bodies; it is a retrieval test set, not legal advice.
 
