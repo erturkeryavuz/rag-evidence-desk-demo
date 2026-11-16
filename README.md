@@ -1,61 +1,101 @@
 # RAG Platform · Evidence desk
 
-**[Open the demo](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)**
+**RAG Platform answers questions from an organisation's own documents. It retrieves the passages that matter with hybrid search, writes an answer that cites them, and keeps the whole trail open to inspection: which passages were found, how they were ranked, and which one each sentence relies on.**
 
-A recorded walkthrough of a retrieval-augmented generation service, built so that every answer can be read beside the passages it cites and the ranking that selected them.
+## **[→ Open the Evidence desk](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)**
 
-This is a recording. No model runs in your browser, there is no question box, and the page makes no network connections.
+[![The Evidence desk: what the platform does, and the featured question](media/rag-01-overview.png)](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)
 
-![An answer beside the passages it cites](media/rag-02-folio-answer-and-sources.png)
+## Why it matters
 
-## What the platform is
+A language model can answer fluently and still be wrong. A useful answer comes with three things:
+- the passages it relied on;
+- a record of how those passages were chosen;
+- an honest check of whether they actually support it.
 
-RAG Platform answers questions from a set of documents. It splits documents into passages, indexes them for dense and BM25 search, merges both rankings with reciprocal rank fusion, can rerank with a cross-encoder, writes an answer with numbered citations, and runs deterministic checks on those citations.
+## What RAG Platform does
 
-## What the demo shows
+- **Searches two ways.** Embedding search finds passages by meaning; BM25 keyword search finds exact terms, codes and names.
+- **Fuses the rankings.** Reciprocal rank fusion merges both lists, so a passage that either search ranks highly can reach the top five. An optional cross-encoder reranker is off by default, because measurement showed it lowered recall.
+- **Answers with citations.** A language model answers from the top five passages, marks each claim with the passage it used, and is told to decline when the passages do not contain the answer.
+- **Checks the result.** Deterministic checks confirm that every citation marker points at a passage the model was given. A reviewer's check states whether the passages actually support the answer.
 
-One recorded session of the real pipeline on a laptop, with local models only (`llama3.2:3b` for answers, `multilingual-e5-small` for embeddings):
+## An answer from two documents
 
-- **Docket.** 17 recorded questions over two corpora: the platform's own documentation in English, and a Turkish fraud-awareness corpus used to test multilingual retrieval.
-- **Folio.** The answer beside the passages given to the model, with a link from each citation to its passage.
-- **Rank flow.** Each candidate passage's position in dense search, in BM25, after fusion, and in the final five, with the reranker off or on.
-- **Evaluation.** A 21-question retrieval evaluation computed during the recording.
-- **Corpus.** A map of passage embeddings and a passage reader.
+> How long was the INC-2041 outage, and how much downtime does the tracking API's monthly availability objective allow?
 
-## What the measurements showed
+1. **Retrieve.** Embedding search ranks the INC-2041 postmortem first; keyword search ranks the service-level objectives first. After fusion, both are in the top two.
+2. **Answer.** "INC-2041 outage was 47 minutes long [1]. The tracking API's monthly availability objective allows about 43 minutes of failed requests in a 30-day month [2]."
+3. **Trace.** Each marker opens its passage, with the sentence it relies on highlighted.
+4. **Check.** Both markers resolve, and the reviewer's check confirms that both facts come from the right document.
 
-On these two corpora the cross-encoder reranker lowered recall and took far more time, most visibly on multi-hop questions, so the platform ships with it off. The demo shows the numbers. The corpora are small (109 and 25 passages), so this is a finding about this setup, not a general claim about rerankers.
+![The featured answer: each citation linked to its passage](media/rag-03-featured-answer.png)
 
-The small local model sometimes answers wrongly while its citations remain structurally valid. Two such answers carry a reviewer’s note, labelled as not model output. Citation checks are structural; the platform does not claim an automatic groundedness score.
+## Why hybrid retrieval matters
 
-![Rank flow with the reranker on](media/rag-04-rank-flow-reranker-on.png)
+For *"A customer's integration is failing with PW-4107. What does that mean?"*, embedding search ranked an incident report first and the deprecation notice second. Keyword search matched the exact error code and ranked the notice first, and fusion put it on top. The answer cites it correctly. The ranking view shows every candidate passage's place in each search, after fusion, and with the reranker off or on.
 
-## Private Product Preview
+![Rank flow: dense, BM25, fused and final ranks for every candidate](media/rag-04-hybrid-ranking.png)
 
-The demo above is a replay of one recorded session. The platform itself runs privately on my own machine; its API, models and indexes are not publicly accessible, and nothing on this site connects to them.
+## When the documents do not say
 
-On that machine, a private build of the Evidence desk is a research workspace connected to the real local API. These screenshots were taken there, with real questions answered by the same local models over the Turkish fraud-awareness corpus.
+Asked about an incident that does not exist in the documents, the platform says it cannot find it, instead of describing a different incident. The page shows the citation check's finding (a refusal carries no marker) and why that is the correct outcome.
 
-**Asking.** The question, the options the API actually applies, and the API's own health report.
+![A correct refusal](media/rag-05-refusal.png)
 
-![Evidence desk private build: the question workspace](media/private-rag-01-ask.png)
+## Evaluation
 
-**An answer and its evidence.** The answer with numbered citations, each passage the API returned with its score and its dense and BM25 rank, the API's citation check, stage timings, and the session notebook on the left. Fields the HTTP API does not return, such as claim coverage, are marked as not returned rather than drawn.
+Retrieval is measured with labelled question sets: the documents that hold each answer are written down first, and the harness checks whether retrieval finds them.
 
-![Evidence desk private build: an answer beside its evidence](media/private-rag-02-answer-and-evidence.png)
+| Set | Questions | Recall@1, reranker off | Recall@1, reranker on | Mean retrieval time, off / on |
+|---|---:|---:|---:|---:|
+| Parcelwise handbook (synthetic, English) | 20 | 1.00 | 0.85 | 49 ms / 120 ms |
+| Fraud-awareness guidance (Turkish) | 21 | 1.00 | 0.90 | 92 ms / 966 ms |
 
-**On a phone.**
+Both sets are small, and with the reranker off they are saturated; the useful signal is the drop with the reranker on. Recall is counted per document, not per passage. There is no automatic answer-support score: in a stored benchmark of 6 cases, a small judge model agreed with hand labels only 40% of the time on groundedness, so answers are checked by hand instead.
 
-<img src="media/private-rag-03-phone.png" alt="Evidence desk private build on a phone" width="300">
+![Evaluation: reranker off against reranker on](media/rag-07-evaluation.png)
 
-## Limits
+## The Corpus view
 
-- The recording was captured inside the pipeline, so it shows more than the HTTP API returns (ranks per stage, claim coverage).
-- The fraud-awareness documents summarise public guidance from Turkish official bodies. They are a retrieval test set, not legal or financial advice.
+The Corpus view shows a question's position among all passages on a two-dimensional map, the five passages it gave the model with their ranks, and each document in full. The map is a PCA projection that keeps about 30% of the variance, so its distances are a rough guide, not a measure of relevance.
+
+![The Corpus view with the featured question](media/rag-06-corpus.png)
+
+## About the website
+
+The website presents real runs of RAG Platform's pipeline with its default settings:
+- generation: `llama3.2:3b` through a local Ollama server;
+- embeddings: `multilingual-e5-small`;
+- reranker: `ms-marco-MiniLM-L-6-v2`.
+
+No hosted model or paid service was used. Nothing runs in your browser, and the page connects to no backend.
+
+The documents are synthetic: nine short engineering documents for a fictional company, labelled as demonstration material in every file. The second evaluation set summarises public fraud-awareness guidance from Turkish official bodies; it is a retrieval test set, not legal advice.
+
+<img src="media/rag-09-mobile.png" alt="The Evidence desk on a phone" width="300">
+
+## The private application
+
+The platform itself runs privately on my own machine. Its API, models and indexes are not publicly accessible, and nothing on this site connects to them. A private build of the Evidence desk asks the real local API. These screenshots were taken there, with real questions answered by the same local model over the Turkish fraud-awareness documents.
+
+![Private build: the question workspace](media/private-rag-01-ask.png)
+
+![Private build: a live answer beside its evidence](media/private-rag-02-answer-and-evidence.png)
+
+<img src="media/private-rag-03-phone.png" alt="Private build on a phone" width="300">
+
+## Limitations
+
+- **Answers can be wrong.** The answers come from a small 3-billion-parameter local model, which can be wrong while every citation marker resolves. The website keeps four such answers, with the reviewer's findings, in a separate *Reviewed limitations* section.
+- **Answer language.** Language is unreliable with this model: three of eleven English questions got Turkish or mixed-language answers.
+- **Top-five cut-off.** Only the top five passages reach the model, so evidence that ranks lower cannot be used.
+- **Not fully repeatable.** Generation runs at temperature 0, but one of eight questions asked twice produced a different answer.
+- **HTTP API gaps.** The HTTP API does not yet pass its `filters` field to retrieval and does not return claim coverage.
 
 ## About this repository
 
-It holds only the built, static demo, its screenshots and a 33-second walkthrough video (`media/rag-walkthrough.mp4`). The platform's source code is private.
+This repository holds the built website and its images. The platform's source code is private.
 
 Third-party licences: [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
