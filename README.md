@@ -1,10 +1,14 @@
-# RAG Platform · Evidence desk
+# RAG Platform · Evidence Desk
 
-**RAG Platform answers questions from an organisation’s own documents with hybrid retrieval and citations. Inspect the passages, compare their rankings, and check whether they support the answer.**
+**RAG Platform answers questions from an organisation’s own documents by searching for meaning and exact terms. Inspect the passages, compare their rankings, and check whether they support the answer.**
 
-## **[→ Open the Evidence desk](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)**
+## **[→ Open the Evidence Desk](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)**
 
-[![The Evidence desk: what the platform does, and the featured question](media/rag-01-overview.png)](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)
+[![Earlier Evidence Desk overview](media/rag-01-overview.png)](https://erturkeryavuz.github.io/rag-evidence-desk-demo/)
+
+## Explore the Evidence Desk
+
+Choose **Watch Tutorial** to follow five passages through semantic and BM25 search, reciprocal rank fusion, context selection, and the cited answer. **Explore cases** also opens the PW-4107 exact-code answer, a correct refusal, and an answer whose markers resolve even though one sentence cites the wrong passage. The screenshots below show the preceding public version.
 
 ## Why it matters
 
@@ -16,9 +20,9 @@ A language model can answer fluently and still be wrong. A useful answer comes w
 ## What RAG Platform does
 
 - **Searches two ways.** Embedding search finds passages by meaning; BM25 keyword search finds exact terms, codes and names.
-- **Fuses the rankings.** Reciprocal rank fusion merges both lists, so a passage that either search ranks highly can reach the top five. An optional cross-encoder reranker is off by default, because measurement showed it lowered recall.
-- **Answers with citations.** A language model answers from the top five passages, marks each claim with the passage it used, and is told to decline when the passages do not contain the answer.
-- **Checks the result.** Deterministic checks confirm that every citation marker points at a passage the model was given. A reviewer's check states whether the passages actually support the answer.
+- **Fuses the rankings.** Reciprocal rank fusion merges both lists, so a passage that either search ranks highly can reach the top five. An optional cross-encoder reranker is off by default, because it lowered retrieval recall and took longer on both labelled sets below.
+- **Answers with citations.** A language model receives the top five passages and is asked to cite them by number or decline when they do not contain the answer.
+- **Checks the result.** Deterministic checks report whether citation markers resolve to passages the model was given. A reviewer's check states whether the passages actually support the answer.
 
 ## An answer from two documents
 
@@ -26,14 +30,14 @@ A language model can answer fluently and still be wrong. A useful answer comes w
 
 1. **Retrieve.** Embedding search ranks the INC-2041 postmortem first; keyword search ranks the service-level objectives first. After fusion, both are in the top two.
 2. **Answer.** "INC-2041 outage was 47 minutes long [1]. The tracking API's monthly availability objective allows about 43 minutes of failed requests in a 30-day month [2]."
-3. **Trace.** Each marker opens its passage, with the sentence it relies on highlighted.
+3. **Trace.** Each marker opens its passage, with words shared with the citing sentence used to highlight a relevant excerpt.
 4. **Check.** Both markers resolve, and the reviewer's check confirms that both facts come from the right document.
 
 ![The featured answer: each citation linked to its passage](media/rag-03-featured-answer.png)
 
 ## Why hybrid retrieval matters
 
-For *"A customer's integration is failing with PW-4107. What does that mean?"*, embedding search ranked an incident report first and the deprecation notice second. Keyword search matched the exact error code and ranked the notice first, and fusion put it on top. The answer cites it correctly. The ranking view shows every candidate passage's place in each search, after fusion, and with the reranker off or on.
+For *"A customer's integration is failing with PW-4107. What does that mean?"*, embedding search ranked an incident report first and the deprecation notice second. Keyword search matched the exact error code and ranked the notice first, and fusion put it on top. The answer cites it correctly. The ranking view compares displayed candidates across the search rankings, fusion and the reranker settings.
 
 ![Rank flow: dense, BM25, fused and final ranks for every candidate](media/rag-04-hybrid-ranking.png)
 
@@ -73,11 +77,11 @@ No hosted model or paid service was used. The interactive website presents compl
 
 The documents are synthetic: nine short engineering documents for a fictional company, labelled as demonstration material in every file. The second evaluation set summarises public fraud-awareness guidance from Turkish official bodies; it is a retrieval test set, not legal advice.
 
-<img src="media/rag-09-mobile.png" alt="The Evidence desk on a phone" width="300">
+<img src="media/rag-09-mobile.png" alt="The Evidence Desk on a phone" width="300">
 
 ## The private application
 
-The platform itself runs privately on my own machine. Its API, models and indexes are not publicly accessible, and nothing on this site connects to them. A private build of the Evidence desk asks the real local API. These screenshots were taken there, with real questions answered by the same local model over the Turkish fraud-awareness documents.
+The platform itself runs privately on my own machine. Its API, models and indexes are not publicly accessible, and nothing on this site connects to them. A private build of the Evidence Desk asks the real local API. These screenshots were taken there, with real questions answered by the same local model over the Turkish fraud-awareness documents.
 
 ![Private build: the question workspace](media/private-rag-01-ask.png)
 
